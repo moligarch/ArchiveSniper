@@ -43,31 +43,25 @@ fProp ArcSnp::GetMetadata(const std::string& filePath, const std::string& logFil
 }
 
 
-void ArcSnp::GetArchive(ARCH& archive, const std::string& path, DWORD index)
+void ArcSnp::GetArchive(ARCH& archive, const std::string& path)
 {
-    if (archive._basePath == "")
+    if (archive._fullPath == "")
     {
-        archive._basePath = path;
-        archive._index = -1;
-        archive._relPath = "";
+        archive._fullPath = path;
+        archive._level = PARENT_LEVEL_ARCHIVE;
     }
     else
     {
-        if (archive._relPath != "")
+        if (archive._level < DEPTH_LIMIT - 1)
         {
-            archive._basePath += "->" + archive._relPath;
-            archive._relPath = path;
-            archive._index = index;
+            archive._fullPath += "->" + path;
+            archive._level += 1;
         }
-        else
-        {
-            archive._relPath = path;
-            archive._index = index;
-        }
+        else throw(std::invalid_argument("Nested file can NOT get open any further: DEPTH_LIMIT"));
     }
 }
-
-bit7z::buffer_t ArcSnp::GetBuffer(ARCH& archive)
+//overload: get buffer inside buffer
+std::vector<DCOMP> ArcSnp::GetBuffer(ARCH& archive, bit7z::buffer_t& buffer)
 {
     bit7z::Bit7zLibrary lib{ "7z.dll" };
     bit7z::BitArchiveReader arc{ lib, archive._fullPath, bit7z::BitFormat::Auto };
@@ -80,7 +74,7 @@ bit7z::buffer_t ArcSnp::GetBuffer(ARCH& archive)
     return result;
 }
 
-std::map<const std::string, bit7z::buffer_t> ArcSnp::GetContent(bit7z::buffer_t archBuffer)
+content_t ArcSnp::GetContent(bit7z::buffer_t archBuffer)
 {
     return std::map<const std::string, bit7z::buffer_t>();
 }
