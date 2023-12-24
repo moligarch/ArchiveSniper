@@ -1,4 +1,5 @@
 #include "ArchiveSniper.h"
+#include <fstream>
 
 fProp ArcSnp::GetMetadata(const std::string& filePath, const std::string& logFilePath) {
 
@@ -55,4 +56,20 @@ bit7z::buffer_t ArcSnp::GetBuffer(PHARCH& archiveHandle)
 std::map<const std::string, bit7z::buffer_t> ArcSnp::GetContent(bit7z::buffer_t archBuffer)
 {
     return std::map<const std::string, bit7z::buffer_t>();
+}
+
+DWORD ArcSnp::ClearBuffer(bit7z::buffer_t archBuffer)
+{
+    //TODO
+    return 0;
+}
+
+arch_t ArcSnp::GetBufferR(PHARCH& hArch, const DWORD dwLevel)
+{
+    return arch_t();
+}
+
+content_t ArcSnp::GetContentR(bit7z::buffer_t archBuffer, const DWORD dwLevel)
+{
+    return content_t();
 }
