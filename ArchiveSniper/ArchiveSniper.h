@@ -6,9 +6,9 @@
 #include <bit7z/bitarchivereader.hpp>
 #include <bit7z/bitarchiveeditor.hpp>
 
-#define PARENT_LEVEL_ARCHIVE	0
-#define DEPTH_LIMIT				1
-#define MAX_BUFFER_SIZE			10000 //10000 KB ~ 10MB
+#define PARENT_LEVEL_ARCHIVE		0
+#define DEPTH_LIMIT					1
+#define MAX_BUFFER_SIZE				10000 //10000 KB ~ 10MB
 
 typedef struct _Decompressed
 {
