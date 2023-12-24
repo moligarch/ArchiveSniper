@@ -62,7 +62,8 @@ namespace UnitTest
 		{
 			ARCH archive{};
 			archive._fullPath = "..\\..\\UnitTest\\sample\\sample.zip";
-			auto result = ArcSnp::GetBuffer(archive);
+			bit7z::buffer_t buffer;
+			auto result = ArcSnp::GetBuffer(archive, buffer);
 			Assert::IsTrue(result.size() > 1);
 
 		}
