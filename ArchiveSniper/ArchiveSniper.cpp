@@ -43,9 +43,28 @@ fProp ArcSnp::GetMetadata(const std::string& filePath, const std::string& logFil
 }
 
 
-DWORD ArcSnp::GetArchive(ARCH& archive, const std::string& path)
+void ArcSnp::GetArchive(ARCH& archive, const std::string& path, DWORD index)
 {
-    return 0;
+    if (archive._basePath == "")
+    {
+        archive._basePath = path;
+        archive._index = -1;
+        archive._relPath = "";
+    }
+    else
+    {
+        if (archive._relPath != "")
+        {
+            archive._basePath += "->" + archive._relPath;
+            archive._relPath = path;
+            archive._index = index;
+        }
+        else
+        {
+            archive._relPath = path;
+            archive._index = index;
+        }
+    }
 }
 
 bit7z::buffer_t ArcSnp::GetBuffer(ARCH& archive)

@@ -17,17 +17,18 @@ typedef struct _fProp
 } fProp;
 
 
-typedef struct _archive
+typedef struct _Archive
 {
-	_archive(const std::string& basePath, const std::string& relPath, const DWORD& dwIndex) 
+	std::string _basePath{};
+	std::string _relPath{};
+	int _index{};
+
+	_Archive(const std::string& basePath, const std::string& relPath, const int index)
 	{
 		_basePath = basePath;
 		_relPath = relPath;
-		_dwIndex = dwIndex;
+		_index = index;
 	};
-	std::string _basePath{};
-	std::string _relPath{};
-	DWORD _dwIndex{ 0 };
 } ARCH;
 
 typedef std::vector<bit7z::buffer_t> arch_t;
@@ -35,7 +36,7 @@ typedef std::map<const std::string, bit7z::buffer_t> content_t;
 
 namespace ArcSnp {
 	fProp GetMetadata(const std::string& filePath, const std::string& logFilePath);
-	DWORD GetArchive(ARCH& archive, const std::string& path);
+	void GetArchive(ARCH& archive, const std::string& path, DWORD index);
 	bit7z::buffer_t GetBuffer(ARCH& archive);
 	std::map<const std::string, bit7z::buffer_t> GetContent(bit7z::buffer_t archBuffer);
 	DWORD ClearBuffer(bit7z::buffer_t archBuffer);
