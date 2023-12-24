@@ -66,7 +66,7 @@ namespace UnitTest
 			try
 			{
 				auto result = ArcSnp::GetContentOfArchive(bufferInfo);
-			Assert::IsTrue(result.size() > 1);
+				Assert::IsTrue(result.size() > 1);
 			}
 			catch (std::exception& e)
 			{
@@ -92,7 +92,24 @@ namespace UnitTest
 			result = ArcSnp::GetContentOfBuffer(bufferInfo, buffer);
 			Assert::IsTrue(result.size() > 1);
 		}
-
+		TEST_METHOD(GetContentRecursively)
+		{
+			//Open Archive and store Content (DCOMP struct store each file inside archive whit detail)
+			BINFO bufferInfo{};
+			content_t result{};
+			ArcSnp::GetBufferInfo(bufferInfo, "..\\..\\UnitTest\\sample\\recursive.zip", true);
+			bit7z::buffer_t buffer{};
+			try
+			{
+				result = ArcSnp::GetContentOfArchive(bufferInfo);
+				Assert::IsTrue(result.size() > 1);
+			}
+			catch (std::exception& e)
+			{
+				std::cout << e.what() << GetLastError();
+				Assert::Fail((wchar_t*)*e.what());
+			}
+		}
 		TEST_METHOD(ReadContentRecursively)
 		{
 			const std::string path{ "..\\..\\UnitTest\\sample\\sample.zip" };
