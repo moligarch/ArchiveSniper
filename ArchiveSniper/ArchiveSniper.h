@@ -17,7 +17,18 @@ typedef struct _fProp
 } fProp;
 
 
+typedef struct _hArchive
+{
+	std::string _basePath{};
+	std::string _relPath{};
+	uint64_t _index{ 0 };
+} hArch;
+
+typedef hArch* PHARCH;
+
 namespace ArcSnp {
 	fProp GetMetadata(const std::string& filePath, const std::string& logFilePath);
-
+	DWORD OpenArchive(PHARCH& archiveHandle, const std::string& path);
+	bit7z::buffer_t GetBuffer(PHARCH& archiveHandle);
+	std::map<const std::string, bit7z::buffer_t> GetContent(bit7z::buffer_t archBuffer);
 }
