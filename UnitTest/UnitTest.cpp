@@ -110,7 +110,7 @@ namespace UnitTest
 				Assert::Fail((wchar_t*)*e.what());
 			}
 		}
-		TEST_METHOD(ReadContentRecursively)
+		TEST_METHOD(ManuallyGetContentRecursively)
 		{
 			const std::string path{ "..\\..\\UnitTest\\sample\\sample.zip" };
 			bit7z::Bit7zLibrary lib{ "7z.dll" };
@@ -143,5 +143,11 @@ namespace UnitTest
 			}
 			log << "\"";
 		}
+	};
+
+
+	TEST_CLASS(Edit) {
+	public:
+		
 	};
 }
