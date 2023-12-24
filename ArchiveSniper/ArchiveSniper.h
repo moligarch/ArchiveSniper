@@ -7,9 +7,8 @@
 #include <bit7z/bitarchiveeditor.hpp>
 
 #define PARENT_LEVEL_ARCHIVE	0
-#define FIRST_LEVEL_ARCHIVE		1
-#define SECOND_LEVEL_ARCHIVE	2
-#define DEPTH_LIMIT				3
+#define DEPTH_LIMIT				1
+#define MAX_BUFFER_SIZE			10000 //10000 KB ~ 10MB
 
 typedef struct _Decompressed
 {
@@ -19,6 +18,16 @@ typedef struct _Decompressed
 	uint64_t size{};
 	bit7z::buffer_t buffer{};
 } DCOMP;
+
+typedef struct _bufferInfo
+{
+	std::string _basePath{};
+	std::string _relPath{};
+	DWORD _depth{};
+	bool _recursive = false;
+} BINFO;
+
+typedef std::vector<DCOMP> content_t;
 
 typedef struct _fProp
 {
