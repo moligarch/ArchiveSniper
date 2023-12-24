@@ -40,3 +40,19 @@ fProp ArcSnp::GetMetadata(const std::string& filePath, const std::string& logFil
         return fProp{};
     }
 }
+
+
+DWORD ArcSnp::OpenArchive(PHARCH& archiveHandle, const std::string& path)
+{
+    return 0;
+}
+
+bit7z::buffer_t ArcSnp::GetBuffer(PHARCH& archiveHandle)
+{
+    return bit7z::buffer_t();
+}
+
+std::map<const std::string, bit7z::buffer_t> ArcSnp::GetContent(bit7z::buffer_t archBuffer)
+{
+    return std::map<const std::string, bit7z::buffer_t>();
+}
