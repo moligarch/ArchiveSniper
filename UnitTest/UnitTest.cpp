@@ -56,9 +56,9 @@ namespace UnitTest
 		}
 	};
 
-	TEST_CLASS(ReadAndWrite) {
+	TEST_CLASS(Read) {
 	public:
-		TEST_METHOD(GetContent)
+		TEST_METHOD(GetFilesInsideArchiveBuffer)
 		{
 			ARCH archive{};
 			archive._fullPath = "..\\..\\UnitTest\\sample\\sample.zip";
