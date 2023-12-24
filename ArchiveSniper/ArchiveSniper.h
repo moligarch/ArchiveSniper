@@ -6,6 +6,20 @@
 #include <bit7z/bitarchivereader.hpp>
 #include <bit7z/bitarchiveeditor.hpp>
 
+#define PARENT_LEVEL_ARCHIVE	0
+#define FIRST_LEVEL_ARCHIVE		1
+#define SECOND_LEVEL_ARCHIVE	2
+#define DEPTH_LIMIT				3
+
+typedef struct _Decompressed
+{
+	std::string basePath{};
+	std::string relPath{};
+	DWORD depth{};
+	uint64_t size{};
+	bit7z::buffer_t buffer{};
+} DCOMP;
+
 typedef struct _fProp
 {
 	uint32_t itemsCount{};
@@ -16,19 +30,11 @@ typedef struct _fProp
 	bit7z::byte_t format{};
 } fProp;
 
-
 typedef struct _Archive
 {
-	std::string _basePath{};
-	std::string _relPath{};
-	int _index{};
-
-	_Archive(const std::string& basePath, const std::string& relPath, const int index)
-	{
-		_basePath = basePath;
-		_relPath = relPath;
-		_index = index;
-	};
+	std::string _fullPath{};
+	DWORD _level{};
+	bool _recursive{};
 } ARCH;
 
 typedef std::vector<bit7z::buffer_t> arch_t;
@@ -36,9 +42,9 @@ typedef std::map<const std::string, bit7z::buffer_t> content_t;
 
 namespace ArcSnp {
 	fProp GetMetadata(const std::string& filePath, const std::string& logFilePath);
-	void GetArchive(ARCH& archive, const std::string& path, DWORD index);
-	bit7z::buffer_t GetBuffer(ARCH& archive);
-	std::map<const std::string, bit7z::buffer_t> GetContent(bit7z::buffer_t archBuffer);
+	void GetArchive(ARCH& archive, const std::string& path);
+	std::vector<DCOMP> GetBuffer(ARCH& archive, bit7z::buffer_t& buffer);
+	content_t GetContent(bit7z::buffer_t archBuffer);
 	DWORD ClearBuffer(bit7z::buffer_t archBuffer);
 	//Recursive
 	arch_t GetBufferR(ARCH& archive, const DWORD dwLevel);
