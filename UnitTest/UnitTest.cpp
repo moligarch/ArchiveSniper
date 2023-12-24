@@ -74,7 +74,23 @@ namespace UnitTest
 				Assert::Fail((wchar_t*) *e.what());
 			}
 		}
+		TEST_METHOD(GetContentOfBuffer)
+		{
+			//Open Archive and store Content (DCOMP struct store each file inside archive whit detail)
+			BINFO bufferInfo{};
+			content_t result{};
+			ArcSnp::GetBufferInfo(bufferInfo, "..\\..\\UnitTest\\sample\\sample.zip", false);
+			bit7z::buffer_t buffer{};
+			result = ArcSnp::GetContentOfArchive(bufferInfo);
+			Assert::IsTrue(result.size() > 1);
 
+			//Update buffer info and use inside.zip (result[3]) buffer to get content from buffer
+			bufferInfo._basePath = result[3].basePath + "->" + result[3].relPath;
+			bufferInfo._relPath = "";
+			bufferInfo._depth = result[3].depth;
+			buffer = result[3].buffer;
+			result = ArcSnp::GetContentOfBuffer(bufferInfo, buffer);
+			Assert::IsTrue(result.size() > 1);
 		}
 
 		TEST_METHOD(ReadContentRecursively)
