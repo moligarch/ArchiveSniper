@@ -58,13 +58,22 @@ namespace UnitTest
 
 	TEST_CLASS(Read) {
 	public:
-		TEST_METHOD(GetFilesInsideArchiveBuffer)
+		TEST_METHOD(GetContentOfArchive)
 		{
-			ARCH archive{};
-			archive._fullPath = "..\\..\\UnitTest\\sample\\sample.zip";
-			bit7z::buffer_t buffer;
-			auto result = ArcSnp::GetBuffer(archive, buffer);
+			BINFO bufferInfo{};
+			bufferInfo._basePath = "..\\..\\UnitTest\\sample\\sample.zip";
+			bit7z::buffer_t buffer{};
+			try
+			{
+				auto result = ArcSnp::GetContentOfArchive(bufferInfo);
 			Assert::IsTrue(result.size() > 1);
+			}
+			catch (std::exception& e)
+			{
+				std::cout << e.what() << GetLastError();
+				Assert::Fail((wchar_t*) *e.what());
+			}
+		}
 
 		}
 
