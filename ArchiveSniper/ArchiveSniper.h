@@ -39,23 +39,14 @@ typedef struct _fProp
 	bit7z::byte_t format{};
 } fProp;
 
-typedef struct _Archive
-{
-	std::string _fullPath{};
-	DWORD _level{};
-	bool _recursive{};
-} ARCH;
 
 typedef std::vector<bit7z::buffer_t> arch_t;
-typedef std::map<const std::string, bit7z::buffer_t> content_t;
 
 namespace ArcSnp {
 	fProp GetMetadata(const std::string& filePath, const std::string& logFilePath);
-	void GetArchive(ARCH& archive, const std::string& path);
-	std::vector<DCOMP> GetBuffer(ARCH& archive, bit7z::buffer_t& buffer);
-	content_t GetContent(bit7z::buffer_t archBuffer);
+	void GetBufferInfo(BINFO& bufferInfo, const std::string& path, bool allowRecursive = false);
+	content_t GetContentOfArchive(BINFO& bufferInfo, DWORD depthLimit = DEPTH_LIMIT);
+	content_t GetContentOfBuffer(BINFO& bufferInfo, bit7z::buffer_t& buffer, DWORD depthLimit = DEPTH_LIMIT);
+	std::vector<std::string> GetList(BINFO& bufferInfo, bit7z::buffer_t& buffer);
 	DWORD ClearBuffer(bit7z::buffer_t archBuffer);
-	//Recursive
-	arch_t GetBufferR(ARCH& archive, const DWORD dwLevel);
-	content_t GetContentR(bit7z::buffer_t archBuffer, const DWORD dwLevel);
 }
