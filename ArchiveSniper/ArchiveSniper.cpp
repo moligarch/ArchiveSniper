@@ -43,12 +43,12 @@ fProp ArcSnp::GetMetadata(const std::string& filePath, const std::string& logFil
 }
 
 
-DWORD ArcSnp::OpenArchive(PHARCH& archiveHandle, const std::string& path)
+DWORD ArcSnp::GetArchive(ARCH& archive, const std::string& path)
 {
     return 0;
 }
 
-bit7z::buffer_t ArcSnp::GetBuffer(PHARCH& archiveHandle)
+bit7z::buffer_t ArcSnp::GetBuffer(ARCH& archive)
 {
     return bit7z::buffer_t();
 }
@@ -64,7 +64,7 @@ DWORD ArcSnp::ClearBuffer(bit7z::buffer_t archBuffer)
     return 0;
 }
 
-arch_t ArcSnp::GetBufferR(PHARCH& hArch, const DWORD dwLevel)
+arch_t ArcSnp::GetBufferR(ARCH& archive, const DWORD dwLevel)
 {
     return arch_t();
 }
