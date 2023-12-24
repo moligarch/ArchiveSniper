@@ -69,7 +69,15 @@ void ArcSnp::GetArchive(ARCH& archive, const std::string& path, DWORD index)
 
 bit7z::buffer_t ArcSnp::GetBuffer(ARCH& archive)
 {
-    return bit7z::buffer_t();
+    bit7z::Bit7zLibrary lib{ "7z.dll" };
+    bit7z::BitArchiveReader arc{ lib, archive._fullPath, bit7z::BitFormat::Auto };
+    std::vector<DCOMP> result;
+    auto arc_items = arc.items();
+    for (auto& item : arc_items) {
+        arc.extractTo(buffer, item.index());
+        result.emplace_back(DCOMP{ archive._fullPath, std::string(item.path()), PARENT_LEVEL_ARCHIVE, item.size(), buffer });
+    }
+    return result;
 }
 
 std::map<const std::string, bit7z::buffer_t> ArcSnp::GetContent(bit7z::buffer_t archBuffer)
