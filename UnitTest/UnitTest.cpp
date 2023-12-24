@@ -3,6 +3,7 @@
 #include "../ArchiveSniper/ArchiveSniper.h"
 #include <bit7z/bittypes.hpp>
 #include <bit7z/bitmemextractor.hpp>
+#include <fstream>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -57,6 +58,14 @@ namespace UnitTest
 
 	TEST_CLASS(ReadAndWrite) {
 	public:
+		TEST_METHOD(GetContent)
+		{
+			ARCH archive{};
+			archive._fullPath = "..\\..\\UnitTest\\sample\\sample.zip";
+			auto result = ArcSnp::GetBuffer(archive);
+			Assert::IsTrue(result.size() > 1);
+
+		}
 
 		TEST_METHOD(ReadContentRecursively)
 		{
