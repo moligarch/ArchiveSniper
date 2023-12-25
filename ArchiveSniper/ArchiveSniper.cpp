@@ -1,15 +1,24 @@
 #include "ArchiveSniper.h"
 #include <fstream>
 
-fProp ArcSnp::GetMetadata(const std::string& filePath, const std::string& logFilePath) {
+ArcSnp::ArcSnp(const std::string& path, bool allowRecursive, DWORD depthLimit) :
+    mPath(path), mRecursion(allowRecursive), mDepthLimit(depthLimit)
+{
+    mLib = sLib::Instance().LibAccess();
+}
+
+ArcSnp::~ArcSnp()
+{
+}
+
+META ArcSnp::GetMetadata(const std::string& filePath, const std::string& logFilePath) {
 
     std::ofstream log(logFilePath);
     try { // bit7z classes can throw BitException objects
 
-        bit7z::Bit7zLibrary lib{ "7z.dll" };
-        bit7z::BitArchiveReader arc{ lib, filePath, bit7z::BitFormat::Auto};
+        bit7z::BitArchiveReader arc{ *mLib, filePath, bit7z::BitFormat::Auto};
 
-        fProp result{ arc.itemsCount(),arc.foldersCount(), arc.filesCount(), arc.size(), arc.packSize(), arc.format().value() };
+        META result{ arc.itemsCount(),arc.foldersCount(), arc.filesCount(), arc.size(), arc.packSize(), arc.format().value() };
         // Printing archive metadata
         log << "Archive properties" << std::endl;
         log << "  Items count: " << result.itemsCount << std::endl;
@@ -38,139 +47,91 @@ fProp ArcSnp::GetMetadata(const std::string& filePath, const std::string& logFil
     }
     catch (const bit7z::BitException& ex) { 
         log << ex.what();
-        return fProp{};
+        return META{};
     }
 }
 
-
-void ArcSnp::GetBufferInfo(BINFO& bufferInfo, const std::string& path, bool allowRecursive)
+content_t ArcSnp::GetContent(std::string& path)
 {
-    bufferInfo._recursive = allowRecursive;
-    if (bufferInfo._basePath == "")
+    if (mDepth++ >= mDepthLimit)
     {
-        bufferInfo._basePath = path;
-        bufferInfo._depth = PARENT_LEVEL_ARCHIVE;
+        mRecursion = false;
     }
-    else
-    {
-        if (bufferInfo._relPath != "") {
-
-            bufferInfo._basePath += "->" + bufferInfo._relPath;
-            bufferInfo._relPath = path;
-            bufferInfo._depth += 1;
-        }
-        else
-        {
-            bufferInfo._relPath = path;
-            bufferInfo._depth += 1;
-        }
-    }
-}
-
-//overload: get buffer inside buffer
-content_t ArcSnp::GetContentOfArchive(BINFO& bufferInfo, DWORD depthLimit)
-{
-    bit7z::Bit7zLibrary lib{ "7z.dll" };
     content_t result;
-    if (!bufferInfo._recursive)
+    if (!mRecursion)
     {
-        bit7z::BitArchiveReader arc{ lib, bufferInfo._basePath, bit7z::BitFormat::Auto };
+        bit7z::BitArchiveReader arc{ *mLib , path, bit7z::BitFormat::Auto};
         auto arc_items = arc.items();
         for (const auto& item : arc_items) {
             bit7z::buffer_t buffer{};
             arc.extractTo(buffer, item.index());
             result.emplace_back(DCOMP{
-                                bufferInfo._basePath + "->" + bufferInfo._relPath,
-                                std::string(item.path()),
-                                PARENT_LEVEL_ARCHIVE,
+                                path + "->" + item.path(),
+                                kBaseArchiveLevel,
                                 item.size(),
                                 buffer });
         }
     }
     else
     {
-        bit7z::BitArchiveReader arc{ lib, bufferInfo._basePath, bit7z::BitFormat::Auto };
+        bit7z::BitArchiveReader arc{ *mLib, path, bit7z::BitFormat::Auto };
         auto arc_items = arc.items();
         for (const auto& item : arc_items) {
-            if (item.size() / 1024 <= MAX_BUFFER_SIZE)
+            if (ValidateFile(item))
             {   
-                BINFO tmpInfo=bufferInfo;
-                ArcSnp::GetBufferInfo(tmpInfo, item.path(), true);
                 bit7z::buffer_t tmpBuffer{};
                 arc.extractTo(tmpBuffer, item.index());
-                auto output = ArcSnp::GetContentOfBuffer(tmpInfo, tmpBuffer);
+                auto output = ResolveBuffer(path + "->" + item.path(), tmpBuffer);
                 result.insert(result.end(), output.begin(), output.end());
             }
         }
     }
+    mDepth--;
     return result;
 }
 
-content_t ArcSnp::GetContentOfBuffer(BINFO& bufferInfo, bit7z::buffer_t& buffer, DWORD depthLimit)
+content_t ArcSnp::ResolveBuffer(const std::string& basePath, bit7z::buffer_t& buffer)
 {
-    bit7z::Bit7zLibrary lib{ "7z.dll" };
-    content_t result;
-    if (!bufferInfo._recursive)
+    if (mDepth++ >= mDepthLimit)
     {
-        bit7z::BitArchiveReader arc{ lib, buffer, bit7z::BitFormat::Auto };
+        mRecursion = false;
+    }
+
+    content_t result;
+    if (!mRecursion)
+    {
+        bit7z::BitArchiveReader arc{ *mLib, buffer, bit7z::BitFormat::Auto };
         auto arc_items = arc.items();
         for (const auto& item : arc_items) {
             bit7z::buffer_t tmpBuffer{};
             arc.extractTo(tmpBuffer, item.index());
             result.emplace_back(DCOMP{
-                                bufferInfo._basePath + "->" + bufferInfo._relPath,
-                                std::string(item.path()),
-                                PARENT_LEVEL_ARCHIVE,
+                                basePath + "->" + item.path(),
+                                mDepth,
                                 item.size(),
                                 tmpBuffer });
         }
     }
     else
     {
-        if (bufferInfo._depth + 1 < DEPTH_LIMIT)
-        {
-            bit7z::BitArchiveReader arc{ lib, buffer, bit7z::BitFormat::Auto };
-            auto arc_items = arc.items();
-            for (const auto& item : arc_items) {
-                if (item.size() / 1024 <= MAX_BUFFER_SIZE)
-                {
-                    BINFO tmpInfo = bufferInfo;
-                    ArcSnp::GetBufferInfo(tmpInfo, item.path(), true);
-                    bit7z::buffer_t tmpBuffer{};
-                    arc.extractTo(tmpBuffer, item.index());
-                    auto output = ArcSnp::GetContentOfBuffer(tmpInfo, tmpBuffer);
-                    result.insert(result.end(), output.begin(), output.end());
-                }
-            }
-        }
-        else
-        {
-            bufferInfo._recursive = false;
-            bit7z::BitArchiveReader arc{ lib, buffer, bit7z::BitFormat::Auto };
-            auto arc_items = arc.items();
-            for (const auto& item : arc_items) {
-                if (item.size() / 1024 <= MAX_BUFFER_SIZE)
-                {
-                    BINFO tmpInfo = bufferInfo;
-                    ArcSnp::GetBufferInfo(tmpInfo, item.path(), false);
-                    bit7z::buffer_t tmpBuffer{};
-                    arc.extractTo(tmpBuffer, item.index());
-                    auto output = ArcSnp::GetContentOfBuffer(tmpInfo, tmpBuffer);
-                    result.insert(result.end(), output.begin(), output.end());
-                }
+        bit7z::BitArchiveReader arc{ *mLib, buffer, bit7z::BitFormat::Auto };
+        auto arc_items = arc.items();
+        for (const auto& item : arc_items) {
+            if (ValidateFile(item))
+            {
+                bit7z::buffer_t tmpBuffer{};
+                arc.extractTo(tmpBuffer, item.index());
+                auto output = ArcSnp::ResolveBuffer(basePath + "->" + item.path(), tmpBuffer);
+                result.insert(result.end(), output.begin(), output.end());
             }
         }
     }
+    mDepth--;
     return result;
 }
 
-std::vector<std::string> ArcSnp::GetList(BINFO& bufferInfo, bit7z::buffer_t& buffer)
+bool ArcSnp::ValidateFile(const bit7z::BitArchiveItemInfo& itemInfo)
 {
-    return std::vector<std::string>();
-}
-
-DWORD ArcSnp::ClearBuffer(bit7z::buffer_t archBuffer)
-{
-    //TODO
-    return 0;
+    bool state = itemInfo.size() / 1024 < kMaxFileBufferSize;
+    return state;
 }

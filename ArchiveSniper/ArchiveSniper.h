@@ -6,30 +6,17 @@
 #include <bit7z/bitarchivereader.hpp>
 #include <bit7z/bitarchiveeditor.hpp>
 
-#define PARENT_LEVEL_ARCHIVE		0
-#define DEPTH_LIMIT					1
-#define MAX_BUFFER_SIZE				10000 //10000 KB ~ 10MB
 
-typedef struct _Decompressed
+struct DCOMP
 {
-	std::string basePath{};
-	std::string relPath{};
-	DWORD depth{};
-	uint64_t size{};
-	bit7z::buffer_t buffer{};
-} DCOMP;
+	std::string msBasePath{};
+	DWORD msDepth{};
+	uint64_t msSize{};
+	bit7z::buffer_t msBuffer{};
+};
+using content_t = std::vector<DCOMP>;
 
-typedef struct _bufferInfo
-{
-	std::string _basePath{};
-	std::string _relPath{};
-	DWORD _depth{};
-	bool _recursive = false;
-} BINFO;
-
-typedef std::vector<DCOMP> content_t;
-
-typedef struct _fProp
+struct META
 {
 	uint32_t itemsCount{};
 	uint32_t foldersCount{};
@@ -37,16 +24,51 @@ typedef struct _fProp
 	uint64_t size{};
 	uint64_t packSize{};
 	bit7z::byte_t format{};
-} fProp;
+};
 
 
-typedef std::vector<bit7z::buffer_t> arch_t;
+class ArcSnp
+{
+	class sLib {
+	public:
+		static sLib& Instance() {
+			static sLib instance;
+			return instance;
+		}
+		std::shared_ptr<bit7z::Bit7zLibrary> LibAccess() {
+			return msLib;
+		}
+		sLib(sLib const&) = delete;
+		sLib(sLib &&) = delete;
+		void operator=(sLib const&) = delete;
+		void operator=(sLib &&) = delete;
+	private:
+		sLib() {
+			if (!msLib)
+			{
+				msLib = std::make_shared<bit7z::Bit7zLibrary>();
+			}
+		};
 
-namespace ArcSnp {
-	fProp GetMetadata(const std::string& filePath, const std::string& logFilePath);
-	void GetBufferInfo(BINFO& bufferInfo, const std::string& path, bool allowRecursive = false);
-	content_t GetContentOfArchive(BINFO& bufferInfo, DWORD depthLimit = DEPTH_LIMIT);
-	content_t GetContentOfBuffer(BINFO& bufferInfo, bit7z::buffer_t& buffer, DWORD depthLimit = DEPTH_LIMIT);
-	std::vector<std::string> GetList(BINFO& bufferInfo, bit7z::buffer_t& buffer);
-	DWORD ClearBuffer(bit7z::buffer_t archBuffer);
-}
+		std::shared_ptr<bit7z::Bit7zLibrary> msLib;
+	};
+public:
+	explicit ArcSnp(const std::string& path, bool allowRecursive, DWORD depthLimit = 2);
+	~ArcSnp();
+
+	META GetMetadata(const std::string& filePath, const std::string& logFilePath);
+	content_t GetContent(std::string& path);
+	//std::vector<std::string> GetList(std::string& path);
+	//DWORD RemoveContent(bit7z::buffer_t archBuffer);
+
+private:
+	content_t ResolveBuffer(const std::string& basePath, bit7z::buffer_t& buffer);
+	bool ValidateFile(const bit7z::BitArchiveItemInfo& itemInfo);
+	std::shared_ptr<bit7z::Bit7zLibrary> mLib;
+	bool mRecursion = false;
+	DWORD mDepthLimit;
+	DWORD mDepth{1};
+	std::string mPath;
+	const DWORD kBaseArchiveLevel{ 1 };
+	const DWORD kMaxFileBufferSize{ 10000 };		//10000 KB ~ 10MB
+};
