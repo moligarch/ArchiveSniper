@@ -75,7 +75,7 @@ content_t ArcSnp::GetContentOfArchive(BINFO& bufferInfo, DWORD depthLimit)
     if (!bufferInfo._recursive)
     {
         bit7z::BitArchiveReader arc{ lib, bufferInfo._basePath, bit7z::BitFormat::Auto };
-        const auto arc_items = arc.items();
+        auto arc_items = arc.items();
         for (const auto& item : arc_items) {
             bit7z::buffer_t buffer{};
             arc.extractTo(buffer, item.index());
@@ -91,7 +91,7 @@ content_t ArcSnp::GetContentOfArchive(BINFO& bufferInfo, DWORD depthLimit)
     {
         bit7z::BitArchiveReader arc{ lib, bufferInfo._basePath, bit7z::BitFormat::Auto };
         auto arc_items = arc.items();
-        for (auto& item : arc_items) {
+        for (const auto& item : arc_items) {
             if (item.size() / 1024 <= MAX_BUFFER_SIZE)
             {   
                 BINFO tmpInfo=bufferInfo;
@@ -113,7 +113,7 @@ content_t ArcSnp::GetContentOfBuffer(BINFO& bufferInfo, bit7z::buffer_t& buffer,
     if (!bufferInfo._recursive)
     {
         bit7z::BitArchiveReader arc{ lib, buffer, bit7z::BitFormat::Auto };
-        const auto arc_items = arc.items();
+        auto arc_items = arc.items();
         for (const auto& item : arc_items) {
             bit7z::buffer_t tmpBuffer{};
             arc.extractTo(tmpBuffer, item.index());
@@ -127,11 +127,11 @@ content_t ArcSnp::GetContentOfBuffer(BINFO& bufferInfo, bit7z::buffer_t& buffer,
     }
     else
     {
-        if (bufferInfo._depth + 1 <= DEPTH_LIMIT)
+        if (bufferInfo._depth + 1 < DEPTH_LIMIT)
         {
             bit7z::BitArchiveReader arc{ lib, buffer, bit7z::BitFormat::Auto };
             auto arc_items = arc.items();
-            for (auto& item : arc_items) {
+            for (const auto& item : arc_items) {
                 if (item.size() / 1024 <= MAX_BUFFER_SIZE)
                 {
                     BINFO tmpInfo = bufferInfo;
@@ -148,7 +148,7 @@ content_t ArcSnp::GetContentOfBuffer(BINFO& bufferInfo, bit7z::buffer_t& buffer,
             bufferInfo._recursive = false;
             bit7z::BitArchiveReader arc{ lib, buffer, bit7z::BitFormat::Auto };
             auto arc_items = arc.items();
-            for (auto& item : arc_items) {
+            for (const auto& item : arc_items) {
                 if (item.size() / 1024 <= MAX_BUFFER_SIZE)
                 {
                     BINFO tmpInfo = bufferInfo;
