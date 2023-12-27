@@ -300,7 +300,7 @@ namespace PerformanceTest
 				result = reader.GetContent(path);
 				auto iter = std::find_if(result.begin(), result.end(), [](const DCOMP& item) {
 					return item.msBasePath ==
-						"..\\..\\Tests\\sample\\rc7.zip->rc6->rc5.zip->rc4.zip->rc3.zip->rc2.zip->rc1.zip->test.zip->test.txt";
+						"..\\..\\Tests\\sample\\rc7.zip->rc6.zip->rc5.zip->rc4.zip->rc3.zip->rc2.zip->rc1.zip->test.zip->test.txt";
 					});
 				std::string buffer{};
 				for (const auto& chr : iter->msBuffer) {
@@ -325,13 +325,30 @@ namespace PerformanceTest
 				result = reader.GetContent(path);
 				auto iter = std::find_if(result.begin(), result.end(), [](const DCOMP& item) {
 					return item.msBasePath ==
-						"..\\..\\Tests\\sample\\rc8.zip->rc7.zip->rc6->rc5.zip->rc4.zip->rc3.zip->rc2.zip->rc1.zip->test.zip->test.txt";
+						"..\\..\\Tests\\sample\\rc8.zip->rc7.zip->rc6.zip->rc5.zip->rc4.zip->rc3.zip->rc2.zip->rc1.zip->test.zip->test.txt";
 					});
 				std::string buffer{};
 				for (const auto& chr : iter->msBuffer) {
 					buffer += chr;
 				}
 				Assert::IsTrue(buffer == "Find This For Test");
+			}
+			catch (std::exception& e)
+			{
+				std::cerr << e.what() << GetLastError();
+				Assert::Fail((wchar_t*)*e.what());
+			}
+		}
+		TEST_METHOD(DepthFinal)
+		{
+
+			std::string path{ "..\\..\\Tests\\sample\\rc20003.zip" };
+			ArcSnp reader(path, true, 20005);
+			content_t result{};
+			try
+			{
+				result = reader.GetContent(path);
+				Assert::IsTrue(result.size()>0);
 			}
 			catch (std::exception& e)
 			{
