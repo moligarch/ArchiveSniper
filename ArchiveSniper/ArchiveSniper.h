@@ -21,7 +21,7 @@ struct META
 	uint64_t msSize{};
 	uint64_t msPackSize{};
 	bit7z::byte_t msformat{};
-	std::error_code msErrCode{};
+	int msErrCode{};
 	std::string msErrMsg{};
 };
 
