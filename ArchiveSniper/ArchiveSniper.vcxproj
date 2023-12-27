@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ArchiveSniper.h" />
+    <ClInclude Include="ArcSnpImpl.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ArchiveSniper.cpp" />
