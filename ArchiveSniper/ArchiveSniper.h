@@ -2,33 +2,55 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <fstream>
-
 #include <bit7z/bitarchivereader.hpp>
 
-typedef struct _fProp
+struct DCOMP
 {
-	uint32_t itemsCount{};
-	uint32_t foldersCount{};
-	uint32_t filesCount{};
-	uint64_t size{};
-	uint64_t packSize{};
-	unsigned char format{};
-} fProp;
+	std::string msBasePath{};
+	DWORD msDepth{};
+	bit7z::buffer_t msBuffer{};
+};
 
+using content_t = std::vector<DCOMP>;
 
-typedef struct _hArchive
+struct META
 {
-	std::string _basePath{};
-	std::string _relPath{};
-	uint64_t _index{ 0 };
-} hArch;
+	uint32_t msItemsCount{};
+	uint32_t msFoldersCount{};
+	uint32_t msFilesCount{};
+	uint64_t msSize{};
+	uint64_t msPackSize{};
+	bit7z::byte_t msformat{};
+	int msErrCode{};
+	std::string msErrMsg{};
+};
 
-typedef hArch* PHARCH;
+class ArcSnp
+{
+public:
+	ArcSnp(const std::string& path, bool allowRecursive, DWORD depthLimit);
+	ArcSnp(const std::string& path, bool allowRecursive);
+	~ArcSnp();
 
-namespace ArcSnp {
-	fProp GetMetadata(const std::string& filePath, const std::string& logFilePath);
-	DWORD OpenArchive(PHARCH& archiveHandle, const std::string& path);
-	bit7z::buffer_t GetBuffer(PHARCH& archiveHandle);
-	std::map<const std::string, bit7z::buffer_t> GetContent(bit7z::buffer_t archBuffer);
-}
+	META GetMetadata(const std::string& filePath);
+
+	/**********************************************************************
+	* @brief Recursively retrieves the content from the specified path.
+	*
+	* @param path The path to the content.
+	* @return The content extracted from the specified path as a vector of DCOMP (content_t).
+	*			for more info look at DCOMP structure definition
+	*
+	* This method retrieves the buffer of every insider file of one archive from the specified file path,
+	*			supporting recursive extraction for supported compressed formats.
+	**********************************************************************/
+	content_t GetContent(const std::string& path);
+
+	/*TODO
+	//std::vector<std::string> GetList(std::string& path);
+	//DWORD RemoveContent(bit7z::buffer_t archBuffer);
+	*/
+private:
+	class ArcSnpImpl;
+	std::unique_ptr<ArcSnpImpl> mpImpl;
+};
