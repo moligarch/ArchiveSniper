@@ -62,19 +62,25 @@ namespace UnitTest
 
 	TEST_CLASS(Read) {
 	public:
-		TEST_METHOD(GetContentOfArchive)
+		TEST_METHOD(GetInsiderContent)
 		{
-			std::string path{ "..\\..\\UnitTest\\sample\\sample.zip" };
+			std::string path{ "..\\..\\UnitTest\\sample\\sample.docx" };
 			ArcSnp reader(path, false);
-			bit7z::buffer_t buffer{};
 			try
 			{
 				auto result = reader.GetContent(path);
-				Assert::IsTrue(result.size() > 1);
+				auto iter = std::find_if(result.begin(), result.end(), [](const DCOMP& item) {
+					return item.msBasePath == "..\\..\\UnitTest\\sample\\sample.docx->test.txt";
+					});
+				std::string buffer{};
+				for (const auto& chr : iter->msBuffer) {
+					buffer += chr;
+				}
+				Assert::IsTrue(buffer == "Find This For Test");
 			}
 			catch (std::exception& e)
 			{
-				std::cout << e.what() << GetLastError();
+				std::cerr << e.what() << GetLastError();
 				Assert::Fail((wchar_t*)*e.what());
 			}
 		}
@@ -84,7 +90,6 @@ namespace UnitTest
 			std::string path{ "..\\..\\UnitTest\\sample\\recursive.zip" };
 			ArcSnp reader(path, true, 3);
 			content_t result{};
-			bit7z::buffer_t buffer{};
 			try
 			{
 				result = reader.GetContent(path);
@@ -93,7 +98,7 @@ namespace UnitTest
 			}
 			catch (std::exception& e)
 			{
-				std::cout << e.what() << GetLastError();
+				std::cerr << e.what() << GetLastError();
 				Assert::Fail((wchar_t*)*e.what());
 			}
 		}
