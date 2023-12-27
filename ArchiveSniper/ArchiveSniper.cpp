@@ -22,13 +22,29 @@ META ArcSnp::ArcSnpImpl::GetMetadata(const std::string& filePath) {
 
         bit7z::BitArchiveReader arc{ *mLib, filePath, bit7z::BitFormat::Auto};
 
-        META result{ arc.itemsCount(),arc.foldersCount(), arc.filesCount(), arc.size(), arc.packSize(), arc.format().value(), std::error_code{} , "" };
+        META result{ 
+            .msItemsCount = arc.itemsCount(),
+            .msFoldersCount = arc.foldersCount(),
+            .msFilesCount = arc.filesCount(),
+            .msSize = arc.size(),
+            .msPackSize = arc.packSize(),
+            .msformat = arc.format().value(),
+            .msErrCode = 0 ,
+            .msErrMsg = "" };
 
         return result;
     }
     catch (const bit7z::BitException& ex)
     {
-        META failed{ NULL,NULL,NULL,NULL,NULL,NULL,ex.code(),ex.what()};
+        META failed{
+            .msItemsCount = NULL,
+            .msFoldersCount = NULL,
+            .msFilesCount = NULL,
+            .msSize = NULL,
+            .msPackSize = NULL,
+            .msformat = NULL,
+            .msErrCode = ex.code().value() ,
+            .msErrMsg = ex.what() };
         return failed;
     }
 }
