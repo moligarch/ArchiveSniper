@@ -44,7 +44,7 @@ public:
 	* This method retrieves the buffer of every insider file of one archive from the specified file path,
 	*			supporting recursive extraction for supported compressed formats.
 	**********************************************************************/
-	content_t GetContent(std::string& path);
+	content_t GetContent(const std::string& path);
 
 	/*TODO
 	//std::vector<std::string> GetList(std::string& path);
