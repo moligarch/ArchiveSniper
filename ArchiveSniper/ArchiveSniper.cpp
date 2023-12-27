@@ -50,7 +50,7 @@ META ArcSnp::ArcSnpImpl::GetMetadata(const std::string& filePath) {
 }
 content_t ArcSnp::ArcSnpImpl::GetContent(const std::string& path)
 {
-    if (mDepth++ >= mDepthLimit)
+    if (mDepth++ > mDepthLimit)
     {
         mRecursion = false;
     }
@@ -94,7 +94,7 @@ content_t ArcSnp::ArcSnpImpl::GetContent(const std::string& path)
 }
 content_t ArcSnp::ArcSnpImpl::ResolveBuffer(const std::string& basePath, bit7z::buffer_t& buffer)
 {
-    if (mDepth++ >= mDepthLimit)
+    if (mDepth++ > mDepthLimit)
     {
         mRecursion = false;
     }
