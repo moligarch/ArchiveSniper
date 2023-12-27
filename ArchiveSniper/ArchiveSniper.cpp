@@ -32,7 +32,7 @@ META ArcSnp::ArcSnpImpl::GetMetadata(const std::string& filePath) {
         return failed;
     }
 }
-content_t ArcSnp::ArcSnpImpl::GetContent(std::string& path)
+content_t ArcSnp::ArcSnpImpl::GetContent(const std::string& path)
 {
     if (mDepth++ >= mDepthLimit)
     {
@@ -154,7 +154,7 @@ META ArcSnp::GetMetadata(const std::string& filePath)
 {
     return mpImpl->GetMetadata(filePath);
 }
-content_t ArcSnp::GetContent(std::string& path)
+content_t ArcSnp::GetContent(const std::string& path)
 {
     return mpImpl->GetContent(path);
 }

@@ -44,7 +44,7 @@ public:
     * This method retrieves the buffer of every insider file of one archive from the specified file path,
     *			supporting recursive extraction for supported compressed formats.
     **********************************************************************/
-    content_t GetContent(std::string& path);
+    content_t GetContent(const std::string& path);
 
     /*TODO
     //std::vector<std::string> GetList(std::string& path);
@@ -78,8 +78,6 @@ private:
     * Returns 1 if the file format is unsupported. Returns 2 if the file size is greater than or equal to 10 MB.
     **********************************************************************/
     bool CheckBuffer(const bit7z::BitArchiveItemInfo& itemInfo);
-
-
 
 
     std::shared_ptr<bit7z::Bit7zLibrary> mLib;
