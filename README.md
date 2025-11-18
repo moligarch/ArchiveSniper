@@ -1,92 +1,179 @@
 # ArchiveSniper
 
+**ArchiveSniper** is a lightweight, thread-safe C++ library for securely inspecting archive files (such as `.zip`, `.rar`, `.7z`, `.msi`, `.doc`, and more) purely in-memory.
 
+It is designed for applications that need to scan or analyze the contents of user-provided archives without the risk and overhead of extracting them to disk. It provides a secure, in-memory buffer-based API that prevents common vulnerabilities like zip bombs and protects against excessive resource consumption.
 
-## Getting started
+## Key Features
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+* **In-Memory Processing:** All file inspection and extraction happens entirely in memory. No files are ever written to disk, eliminating disk I/O bottlenecks and temporary file artifacts.
+* **Thread-Safe by Design:** The `ArcSnp` class is fully re-entrant. A single instance can be safely shared and used by multiple threads simultaneously to scan different archives.
+* **Security First:** Built from the ground up to safely handle untrusted files.
+* **Resource Limiting:** Enforces configurable limits on file sizes, memory usage, and buffer sizes.
+* **Zip Bomb Detection:** Includes heuristics to detect and reject common zip bombs before they exhaust system memory.
+* **Recursive Inspection:** Can scan archives nested within other archives up to a user-defined depth.
+* **Simple, Modern C++ API:** Uses `std::variant` for clear success/error handling, `std::string` and `std::vector` for data, and a clean Pimpl-based header that is completely decoupled from the underlying bit7z library.
+* **Wide Format Support:** Supports all archive formats recognized by the 7-Zip library.
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+## Requirements
 
-## Add your files
+* A C++17 (or newer) compiler.
+* The $bit7z$ library (https://github.com/rikyoz/bit7z) (as a build dependency).
+* The 7-Zip library (7zip.dll on Windows, 7z.so on Linux) available at runtime.
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+## Building the Project
 
+This project is built using CMake.
+
+```bash
+# Clone the repository
+git clone https://www.google.com/search?q=https://github.com/your-username/ArchiveSniper.git
+cd ArchiveSniper
+
+# Create a build directory
+cmake -B build
+
+# Build the project
+cmake --build build --config Release
 ```
-cd existing_repo
-git remote add origin https://git.dshasin.net/verkiani/archivesniper.git
-git branch -M main
-git push -uf origin main
+
+You will need to ensure CMake can find your `bit7z` library dependency.
+
+## Quick Start / Usage
+
+The public API is minimal and easy to use. The most critical step is initializing the 7-Zip library **once** at application startup.
+
+```cpp
+#include "ArcSnp/ArchiveSniper.h"
+#include "ArcSnp/Shared7z.h" // Required for initialization
+#include <iostream>
+#include <variant>
+
+int main() {
+try {
+// --- 1. Initialize the Library (Once) ---
+// This must be called once before creating any ArcSnp objects.
+// It points to the 7-Zip DLL/SO file.
+Shared7z::Init("7zip.dll");
+
+    // --- 2. Create an Inspector ---
+    // Configure the security limits (in MB):
+    // 1. Max File Size (100 MB)
+    // 2. Max Solid File Size (50 MB)
+    // 3. Max Single Buffer Size (20 MB)
+    // 4. Max Total Memory per Call (500 MB)
+    ArcSnp sniper(100, 50, 20, 500);
+
+    // --- 3. Get Archive Metadata ---
+    std::string archive_path = "C:\\path\\to\\archive.zip";
+    std::variant<Meta, ArcSnpState> result = sniper.GetMetadata(archive_path);
+
+    if (std::holds_alternative<Meta>(result)) {
+        const Meta& metadata = std::get<Meta>(result);
+        
+        std::cout << "Archive Format: " << metadata.GetExtension() << std::endl;
+        std::cout << "File Count: " << metadata.files_count_ << std::endl;
+        std::cout << "Total Size: " << metadata.size_ << " bytes" << std::endl;
+
+    } else {
+        ArcSnpState error = std::get<ArcSnpState>(result);
+        std::cerr << "Failed to get metadata: " << static_cast<int>(error) << std::endl;
+    }
+
+    // --- 4. Get Recursive Content (up to 3 levels deep) ---
+    Content files = sniper.GetContent(archive_path, 3);
+
+    for (const auto& file : files) {
+        std::cout << "Path: " << file.info.base_path_ << "\n";
+        std::cout << "  - Depth: " << file.info.depth_ << "\n";
+        std::cout << "  - State: " << static_cast<int>(file.info.state_) << "\n";
+        std::cout << "  - Size: " << file.buffer_.size() << " bytes\n";
+
+        if (file.info.state_ == ArcSnpState::kExtractable || 
+            file.info.state_ == ArcSnpState::kNotValid) {
+            // You can now safely use the file.buffer_
+            // (e.g., run a virus scan on it)
+        }
+    }
+
+} catch (const std::exception& e) {
+    std::cerr << "An error occurred: " << e.what() << std::endl;
+    return 1;
+}
+
+return 0;
+
+
+}
 ```
 
-## Integrate with your tools
+## API Overview
 
-- [ ] [Set up project integrations](https://git.dshasin.net/verkiani/archivesniper/-/settings/integrations)
+### `Shared7z::Init(const fs::path& library_path)`
 
-## Collaborate with your team
+A static method that **must** be called once to load the 7-Zip DLL/SO into memory.
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+### `ArcSnp(size_t file_size_limit, size_t solid_size_limit, size_t buffer_size_limit, size_t max_used_memory)`
 
-## Test and Deploy
+The main class constructor. All size limits are specified in **Megabytes (MB)**.
 
-Use the built-in continuous integration in GitLab.
+* `file_size_limit`: The maximum size of the initial archive file to open.
+* `solid_size_limit`: A (usually stricter) size limit for *solid* archives.
+* `buffer_size_limit`: The maximum size for any *single nested file* extracted into a buffer.
+* `max_used_memory`: The maximum *total memory* that one `GetContent` or `GetContentList` call can allocate. This is the primary defense against zip bombs.
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing(SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+### `std::variant<Meta, ArcSnpState> GetMetadata(const std::string& file_path)`
 
-***
+Returns metadata for the top-level archive.
 
-# Editing this README
+* On success, returns a `Meta` struct.
+* On failure (e.g., file not found, is not an archive), returns an `ArcSnpState` error.
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thank you to [makeareadme.com](https://www.makeareadme.com/) for this template.
+### `struct Meta`
 
-## Suggestions for a good README
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+Contains basic archive metadata.
 
-## Name
-Choose a self-explaining name for your project.
+* `uint32_t items_count_`
+* `uint32_t folders_count_`
+* `uint32_t files_count_`
+* `uint64_t size_`
+* `uint64_t pack_size_`
+* `FormatId format_`: A type-safe enum for the archive format.
+* `std::string GetFormatExtension() const`: A helper function that returns a string representation of the format (e.g., "zip", "rar", "compound").
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+### `Content GetContent(const std::string& file_path, size_t depth_limit)`
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+Returns a `std::vector<Decompressed>` containing the buffers for all files found up to the specified `depth_limit`.
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+* `Content` is `std::vector<Decompressed>`.
+* `Decompressed` contains an `ArcInfo` struct and a `std::vector<unsigned char> buffer_`.
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+### `ContentList GetContentList(const std::string& file_path, size_t depth_limit)`
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+A faster alternative to `GetContent` that does not retain the file buffers. It returns a `std::vector<ArcInfo>`.
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+* `ContentList` is std::vector<ArcInfo>.
+* `ArcInfo` contains the `base_path_`, `depth_`, and `state_` for a file.
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+### `enum class ArcSnpState`
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+Indicates the status of a file or archive. Key values include:
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+* `kExtractable`: The file is a valid archive and can be recursed into.
+* `kNotValid`: The file is not an archive (e.g., a .txt file) but is otherwise safe.
+* `kUnsafe`: The file was flagged as a zip bomb.
+* `kStackFilled`: The max_used_memory limit was hit.
+* `kBufferSizeGreaterThanMax`: A single file exceeded the buffer_size_limit.
+* ...and other error states.
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+### `enum class FormatId`
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+A type-safe enum representing all formats supported by 7-Zip. See `ArchiveSniper.h` for the complete list (e.g., `FormatId::kZip`, `FormatId::kRar5`, `FormatId::kCompound`).
+
+## Concurrency
+
+The `ArcSnp` class is fully re-entrant and thread-safe. A single, shared `ArcSnp` instance can be used by any number of threads to process different files concurrently. All per-call state (like memory usage and recursion depth) is managed in a private `RecursionContext` struct on the stack, preventing data races.
 
 ## License
-For open source projects, say how it is licensed.
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+This project is licensed under the MIT License.
