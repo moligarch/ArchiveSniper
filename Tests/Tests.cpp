@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "CppUnitTest.h"
-#include "../ArchiveSniper/ArchiveSniper.h"
+#include <ArcSnp/ArchiveSniper.h>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -12,7 +12,7 @@ namespace UnitTest
 		TEST_METHOD(Doc)
 		{
 			const std::string path{ "..\\..\\Tests\\sample\\test.doc" };
-			ArcSnp reader(path, false);
+			ArcSnp reader{};
 			auto result = reader.GetMetadata(path);
 			Assert::IsTrue(result.msFilesCount > 1);
 		}

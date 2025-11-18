@@ -15,15 +15,27 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ArchiveSniper.h">
+    <ClInclude Include="include\ArcSnp\ArchiveSniper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ArcSnpImpl.h">
+    <ClInclude Include="src\checker.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ArchiveSniperImpl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ArcSnp\Shared7z.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ArchiveSniper.cpp">
+    <ClCompile Include="src\ArchiveSniper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\checker.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Shared7z.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
