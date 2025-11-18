@@ -48,10 +48,10 @@ The public API is minimal and easy to use. The most critical step is initializin
 
 int main() {
 try {
-// --- 1. Initialize the Library (Once) ---
-// This must be called once before creating any ArcSnp objects.
-// It points to the 7-Zip DLL/SO file.
-Shared7z::Init("7zip.dll");
+	// --- 1. Initialize the Library (Once) ---
+	// This must be called once before creating any ArcSnp objects.
+	// It points to the 7-Zip DLL/SO file.
+	Shared7z::Init("7zip.dll");
 
     // --- 2. Create an Inspector ---
     // Configure the security limits (in MB):
@@ -99,7 +99,6 @@ Shared7z::Init("7zip.dll");
 }
 
 return 0;
-
 
 }
 ```
