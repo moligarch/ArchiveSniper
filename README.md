@@ -19,22 +19,19 @@ It is designed for applications that need to scan or analyze the contents of use
 
 * A C++17 (or newer) compiler.
 * The $bit7z$ library (https://github.com/rikyoz/bit7z) (as a build dependency).
-* The 7-Zip library (7zip.dll on Windows, 7z.so on Linux) available at runtime.
+* The 7-Zip library (7zip.dll) available at runtime.
 
 ## Building the Project
 
 This project is built using CMake.
 
 ```bash
-# Clone the repository
-git clone https://www.google.com/search?q=https://github.com/your-username/ArchiveSniper.git
+# Clone the repository (recursive to fetch submodules)
+git clone --recursive https://github.com/moligarch/ArchiveSniper.git
 cd ArchiveSniper
 
-# Create a build directory
-cmake -B build
-
-# Build the project
-cmake --build build --config Release
+# Build bit7z with automatic format detection (required for static libs)
+powershell ./build_bit7z.ps1
 ```
 
 You will need to ensure CMake can find your `bit7z` library dependency.
